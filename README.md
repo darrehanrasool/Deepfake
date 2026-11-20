@@ -60,6 +60,13 @@ This research project and benchmark platform is developed at the Centre for Arti
 
 ---
 
+## 👥 Contributors
+
+- [**Shafiya Bashir**](https://github.com/Shafiya-Bashir) (`@Shafiya-Bashir`) — Contributor
+- [**Dar Rehan Rasool**](https://github.com/darrehanrasool) (`@darrehanrasool`) — Project Lead & Maintainer
+
+---
+
 ## 🏗️ Complete System Architecture & Research Diagrams
 
 The DeepFake-AI forensic suite provides publication-grade, mathematically verified architectural diagrams for every implemented model in the repository. All diagrams are authored as **retina-sharp Scalable Vector Graphics (`.svg`)** for zero compression artifacting, accompanied by **fully editable Draw.io XML models (`.drawio`)** that can be directly imported and edited in [draw.io / diagrams.net](https://app.diagrams.net).
