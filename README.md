@@ -62,7 +62,7 @@ This research project and benchmark platform is developed at the Centre for Arti
 
 ## 👥 Contributors
 
-- [**Shafiya Bashir**](https://github.com/Shafiya-Bashir) (`@Shafiya-Bashir`) — Contributor
+- [**Shafiya Bashir**](https://github.com/shafiyabashirpampori) (`@shafiyabashirpampori`) — Contributor
 - [**Dar Rehan Rasool**](https://github.com/darrehanrasool) (`@darrehanrasool`) — Project Lead & Maintainer
 
 ---
