@@ -3,6 +3,7 @@ message: "If you use this software or deepfake research benchmark in your work, 
 authors:
   - family-names: "Rasool"
     given-names: "Dar Rehan"
+    orcid: "https://orcid.org/0009-0004-6426-5195"
     affiliation: "Centre for Artificial Intelligence, IUST, Kashmir"
     role: "Project Lead & Contributing Student"
     email: "darrehanrasool@gmail.com"

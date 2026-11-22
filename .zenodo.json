@@ -1,0 +1,27 @@
+{
+  "title": "DeepFake-AI: Forensic Detection Suite for High-Fidelity Synthetic Media and Face Manipulation",
+  "description": "A publication-grade deep learning forensic framework for spatial-temporal artifact detection in generative video and digital image manipulation.",
+  "creators": [
+    {
+      "name": "Rasool, Dar Rehan",
+      "affiliation": "Centre for Artificial Intelligence, IUST, Kashmir",
+      "orcid": "0009-0004-6426-5195"
+    },
+    {
+      "name": "Ahmed, Dr. Riyaz",
+      "affiliation": "Centre for Artificial Intelligence, IUST, Kashmir"
+    },
+    {
+      "name": "Jawad, Dr. M. Abdul",
+      "affiliation": "Centre for Artificial Intelligence, IUST, Kashmir"
+    }
+  ],
+  "access_right": "open",
+  "license": "MIT",
+  "keywords": [
+    "deepfake-detection",
+    "digital-forensics",
+    "computer-vision",
+    "synthetic-media"
+  ]
+}
