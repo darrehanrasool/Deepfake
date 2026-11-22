@@ -404,13 +404,15 @@ curl -s http://127.0.0.1:8080/api/dataset-stats | python3 -m json.tool
 ## 📜 Citation & Intellectual Property
 
 ```bibtex
-@article{rasool2026deepfakeai,
-  title={DeepFake-AI: Unified Multi-Modal Spatial-Frequency and Temporal Forensics Benchmark with Real-Time Live Stream Ingestion},
-  author={Rasool, Dar Rehan and Ahmed, Dr. Riyaz and Jawad, Dr. M. Abdul},
-  affiliation={Centre for Artificial Intelligence, Islamic University of Science and Technology (IUST), Kashmir, India},
-  journal={arXiv preprint},
-  year={2026},
-  note={Copyright \copyright 2026 Dar Rehan Rasool (@darrehanrasool). All Rights Reserved.}
+@software{rasool2026deepfakeai,
+  title = {DeepFake-AI: Unified Multi-Modal Spatial-Frequency and Temporal Forensics Benchmark with Real-Time Live Stream Ingestion},
+  author = {Rasool, Dar Rehan and Ahmed, Dr. Riyaz and Jawad, Dr. M. Abdul},
+  affiliation = {Centre for Artificial Intelligence, Islamic University of Science and Technology (IUST), Kashmir, India},
+  publisher = {Zenodo / GitHub},
+  year = {2026},
+  version = {1.0.0},
+  url = {https://github.com/darrehanrasool/Deepfake},
+  note = {Open-source synthetic media forensic benchmark. ORCID: 0009-0004-6426-5195}
 }
 ```
 
