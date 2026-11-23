@@ -207,7 +207,7 @@ def build_notebook():
                     "print('=' * 70)\n",
                     "print(f'[✓] Active Training Corpus: {len(df_corpus)} sequences')\n",
                     "print(f'    • Fake Samples: {sum(df_corpus[\"label\"] == 1)}')\n",
-                    "    • Real Samples: {sum(df_corpus[\"label\"] == 0)}')\n",
+                    "print(f'    • Real Samples: {sum(df_corpus[\"label\"] == 0)}')\n",
                     "\n",
                     "# Partition: 80% Train, 20% Validation\n",
                     "n_train = max(1, int(len(df_corpus) * 0.8))\n",
