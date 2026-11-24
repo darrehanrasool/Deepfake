@@ -78,3 +78,17 @@ data/captured_tests/video/*
 
 # Research Paper Manuscripts & Literature PDFs (Kept private locally - never pushed)
 papers/
+
+# Raw Benchmark Datasets & Trained Model Weights (Multi-GB local files)
+data/raw/dfd_benchmark/
+data/raw/dfdc/*.mp4
+data/raw/dfdc/*.zip
+data/raw/*/*.mp4
+data/raw/*/*.zip
+*.pt
+*.pth
+*.onnx
+*.bin
+*.kaggle-partial
+
+
