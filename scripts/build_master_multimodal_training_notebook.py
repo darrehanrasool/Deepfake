@@ -46,11 +46,11 @@ def generate_master_notebook():
 - **Dr. M. Abdul Jawad** (`M.Tech Student, Centre for Artificial Intelligence, IUST`)
 
 **Framework Core Capabilities:**
-1. **Universal Hardware Autonomy**: Automatically discovers and optimizes for NVIDIA CUDA (with FP16 AMP & VRAM profiling), Apple Silicon MPS, or multi-threaded CPU fallback on Windows, Linux, or macOS.
+1. **Universal Hardware Autonomy**: Automatically discovers and optimizes for NVIDIA CUDA (with FP16 AMP, VRAM, and GPU temperature telemetry), Apple Silicon MPS, or multi-threaded CPU fallback on Windows, Linux, or macOS.
 2. **Dual-Benchmark Unified Ingestion**: Ingests Google & Jigsaw DFD (22.5 GB / 3,431 videos) and Meta DFDC (DeepFake Detection Challenge, 400 videos) with strict actor-isolated, zero-leakage splits.
 3. **Multimodal Forensic Tri-Stream**: Analyzes Spatial Boundary blending seams, 12-subband 2D Haar Wavelet frequency disruptions, and 8-frame Bi-GRU temporal biological continuity.
 4. **Anti-Overfitting & Anti-Underfitting Guarantee**: Balanced class re-weighting, Label Smoothing (0.05), AdamW Decoupled Weight Decay (1e-4), Dropout (0.4), Gradient Norm Clipping (1.0), and Cosine Annealing Learning Rate decay with warmup.
-5. **Zero-Deadlock Memory & Logging**: Responsive batch-by-batch terminal status with ETA and loss progression; atomic resume checkpoints (`best_model.pt`, `latest_checkpoint.pt`).
+5. **Zero-Deadlock Memory & Logging**: Responsive batch-by-batch terminal status with ETA, live VRAM/RAM profiling, and loss progression; atomic resume checkpoints (`best_model.pt`, `latest_checkpoint.pt`).
 
 *Copyright (c) 2026 Dar Rehan Rasool (@darrehanrasool). All rights reserved.*'''
     ))
@@ -71,7 +71,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # Self-healing dependency verification for fresh environments
-for mod_name, pip_name in [('numpy', 'numpy'), ('pandas', 'pandas'), ('torch', 'torch'), ('cv2', 'opencv-python'), ('sklearn', 'scikit-learn'), ('matplotlib', 'matplotlib')]:
+for mod_name, pip_name in [('numpy', 'numpy'), ('pandas', 'pandas'), ('torch', 'torch'), ('cv2', 'opencv-python'), ('sklearn', 'scikit-learn'), ('matplotlib', 'matplotlib'), ('psutil', 'psutil')]:
     try:
         __import__(mod_name)
     except ImportError:
@@ -86,6 +86,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 from sklearn.metrics import roc_auc_score, accuracy_score, precision_recall_fscore_support, confusion_matrix
+import psutil
 
 def seed_everything(seed=42):
     random.seed(seed)
@@ -108,6 +109,10 @@ print(f' • Python Runtime        : {sys.version.split()[0]}')
 print(f' • PyTorch Version       : {torch.__version__}')
 print(f' • CPU Core Count        : {os.cpu_count()} logical cores')
 
+# Host System RAM Telemetry
+ram_info = psutil.virtual_memory()
+print(f' • Host System RAM       : {ram_info.total / (1024**3):.2f} GB Total | {ram_info.available / (1024**3):.2f} GB Available ({ram_info.percent}% used)')
+
 use_amp = False
 if torch.cuda.is_available():
     device = torch.device('cuda')
@@ -120,6 +125,18 @@ if torch.cuda.is_available():
     print(f' • Total VRAM Allocated  : {vram_gb:.2f} GB')
     print(f' • CUDA Toolkit Version  : {cuda_ver}')
     print(' • Mixed Precision (AMP) : ENABLED (FP16 Accelerated)')
+    
+    # Query GPU Core Sensors via nvidia-smi if accessible
+    try:
+        smi_out = subprocess.check_output(
+            ['nvidia-smi', '--query-gpu=temperature.gpu,fan.speed,utilization.gpu,power.draw', '--format=csv,noheader,nounits'],
+            text=True, stderr=subprocess.DEVNULL
+        ).strip().split(',')
+        if len(smi_out) >= 4:
+            temp, fan, util, power = [x.strip() for x in smi_out[:4]]
+            print(f' • GPU Sensor Telemetry  : Temp: {temp}°C | Fan: {fan}% | Core Load: {util}% | Power: {power}W')
+    except Exception:
+        pass
 elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
     device = torch.device('mps')
     print(' • Primary Accelerator   : Apple Silicon Metal Performance Shaders (MPS)')
@@ -500,7 +517,7 @@ print(f'  • Total Parameters     : {total_params:,}')
 print(f'  • Trainable Parameters : {trainable_params:,}')'''
     ))
 
-    # CELL 6: SOTA Regularized Training & Validation Engine
+    # CELL 6: SOTA Regularized Training & Validation Engine with Telemetry and Robust Auto-Resume
     cells.append(code_cell(
 r'''EPOCHS = 10
 BATCH_SIZE = 8 if (torch.cuda.is_available() or (hasattr(torch.backends, 'mps') and torch.backends.mps.is_available())) else 4
@@ -530,21 +547,28 @@ start_epoch = 1
 best_val_auc = 0.0
 history = []
 
+# AUTOMATIC ACCIDENTAL INTERRUPTION RESUME
 if latest_checkpoint_path.exists():
-    print(f'[*] Discovered checkpoint at {latest_checkpoint_path}. Resuming session...')
-    chk = torch.load(latest_checkpoint_path, map_location=device)
-    model.load_state_dict(chk['model_state_dict'])
-    optimizer.load_state_dict(chk['optimizer_state_dict'])
-    scheduler.load_state_dict(chk['scheduler_state_dict'])
-    start_epoch = chk.get('epoch', 0) + 1
-    best_val_auc = chk.get('best_val_auc', 0.0)
-    history = chk.get('history', [])
-    print(f'[✓] Resumed state cleanly from Epoch {start_epoch - 1} | Baseline Best AUC: {best_val_auc:.4f}')
+    print(f'[*] DETECTED PRIOR CHECKPOINT at {latest_checkpoint_path}! Resuming session...')
+    try:
+        chk = torch.load(latest_checkpoint_path, map_location=device)
+        model.load_state_dict(chk['model_state_dict'])
+        optimizer.load_state_dict(chk['optimizer_state_dict'])
+        scheduler.load_state_dict(chk['scheduler_state_dict'])
+        if use_amp and 'scaler_state_dict' in chk:
+            scaler.load_state_dict(chk['scaler_state_dict'])
+        start_epoch = chk.get('epoch', 0) + 1
+        best_val_auc = chk.get('best_val_auc', 0.0)
+        history = chk.get('history', [])
+        print(f'[✓] AUTOMATIC RESUME SUCCESSFUL: Picking up from Epoch {start_epoch:02d}/{EPOCHS:02d}!')
+        print(f'    • Baseline Best Validation ROC-AUC so far: {best_val_auc:.4f}')
+    except Exception as e:
+        print(f'[-] Note on checkpoint loading: {e}. Starting fresh.')
 elif best_checkpoint_path.exists():
     print(f'[*] Discovered pre-trained weights at {best_checkpoint_path}. Loading parameters...')
     try:
         chk = torch.load(best_checkpoint_path, map_location=device)
-        if 'model_state_dict' in chk:
+        if isinstance(chk, dict) and 'model_state_dict' in chk:
             model.load_state_dict(chk['model_state_dict'])
             best_val_auc = chk.get('val_auc', 0.0)
         else:
@@ -557,160 +581,190 @@ print('=' * 85)
 print('      LAUNCHING MASTER MULTIMODAL ST2-SYNCNET SOTA TRAINING PIPELINE')
 print('=' * 85)
 
-for epoch in range(start_epoch, EPOCHS + 1):
-    t_epoch_start = time.time()
-    model.train()
-    running_loss = 0.0
-    n_train_batches = len(train_loader)
-    current_lr = optimizer.param_groups[0]['lr']
+try:
+    for epoch in range(start_epoch, EPOCHS + 1):
+        t_epoch_start = time.time()
+        model.train()
+        running_loss = 0.0
+        n_train_batches = len(train_loader)
+        current_lr = optimizer.param_groups[0]['lr']
 
-    print(f'\n=====================================================================================')
-    print(f'[*] >>> EPOCH {epoch:02d}/{EPOCHS:02d} IN PROGRESS [Learning Rate: {current_lr:.2e}] <<<')
-    print(f'=====================================================================================')
-    sys.stdout.flush()
-
-    t_step_start = time.time()
-    for b_idx, batch in enumerate(train_loader, 1):
-        spatial = batch['spatial'].to(device, non_blocking=True)
-        temporal = batch['temporal'].to(device, non_blocking=True)
-        labels = batch['label'].to(device, non_blocking=True)
-
-        optimizer.zero_grad()
-        if use_amp:
-            with torch.cuda.amp.autocast():
-                logits = model(spatial, temporal)
-                loss = criterion(logits, labels)
-            scaler.scale(loss).backward()
-            scaler.unscale_(optimizer)
-            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=MAX_GRAD_NORM)
-            scaler.step(optimizer)
-            scaler.update()
-        else:
-            logits = model(spatial, temporal)
-            loss = criterion(logits, labels)
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=MAX_GRAD_NORM)
-            optimizer.step()
-
-        running_loss += loss.item()
-        step_time = time.time() - t_step_start
-        t_step_start = time.time()
-
-        pct = (b_idx / n_train_batches) * 100
-        bar_len = 20
-        filled = int(bar_len * b_idx / n_train_batches)
-        bar_str = '█' * filled + '░' * (bar_len - filled)
-        avg_loss = running_loss / b_idx
-        remaining_steps = n_train_batches - b_idx
-        eta_sec = int(remaining_steps * step_time)
-        eta_str = f'{eta_sec // 60:02d}m {eta_sec % 60:02d}s'
-
-        print(f'  [TRAIN] Epoch {epoch:02d}/{EPOCHS:02d} | Batch {b_idx:02d}/{n_train_batches:02d} [{bar_str}] {pct:5.1f}% | Loss: {loss.item():.4f} (Avg: {avg_loss:.4f}) | Step: {step_time:.1f}s | ETA: {eta_str}')
+        print(f'\n=====================================================================================')
+        print(f'[*] >>> EPOCH {epoch:02d}/{EPOCHS:02d} IN PROGRESS [Learning Rate: {current_lr:.2e}] <<<')
+        print(f'=====================================================================================')
         sys.stdout.flush()
 
-        del spatial, temporal, labels, logits, loss
-        if b_idx % 10 == 0:
-            gc.collect()
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
-
-    train_loss = running_loss / max(n_train_batches, 1)
-    scheduler.step()
-
-    # Validation Loop
-    model.eval()
-    val_loss = 0.0
-    val_preds = []
-    val_targets = []
-    n_val_batches = len(val_loader)
-
-    print(f'\n  [VALIDATION] Commencing validation on {len(val_df)} unseen test videos...')
-    sys.stdout.flush()
-
-    with torch.no_grad():
-        for vb_idx, batch in enumerate(val_loader, 1):
+        t_step_start = time.time()
+        for b_idx, batch in enumerate(train_loader, 1):
             spatial = batch['spatial'].to(device, non_blocking=True)
             temporal = batch['temporal'].to(device, non_blocking=True)
             labels = batch['label'].to(device, non_blocking=True)
 
+            optimizer.zero_grad()
             if use_amp:
                 with torch.cuda.amp.autocast():
                     logits = model(spatial, temporal)
-                    v_loss = criterion(logits, labels)
+                    loss = criterion(logits, labels)
+                scaler.scale(loss).backward()
+                scaler.unscale_(optimizer)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=MAX_GRAD_NORM)
+                scaler.step(optimizer)
+                scaler.update()
             else:
                 logits = model(spatial, temporal)
-                v_loss = criterion(logits, labels)
+                loss = criterion(logits, labels)
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=MAX_GRAD_NORM)
+                optimizer.step()
 
-            val_loss += v_loss.item()
-            probs = F.softmax(logits, dim=1)[:, 1].cpu().numpy()
-            val_preds.extend(probs.tolist())
-            val_targets.extend(labels.cpu().numpy().tolist())
+            running_loss += loss.item()
+            step_time = time.time() - t_step_start
+            t_step_start = time.time()
 
-            pct_v = (vb_idx / n_val_batches) * 100
-            filled_v = int(bar_len * vb_idx / n_val_batches)
-            bar_v = '█' * filled_v + '░' * (bar_len - filled_v)
-            print(f'  [VAL]   Batch {vb_idx:02d}/{n_val_batches:02d} [{bar_v}] {pct_v:5.1f}% | Val Loss: {v_loss.item():.4f}')
+            pct = (b_idx / n_train_batches) * 100
+            bar_len = 20
+            filled = int(bar_len * b_idx / n_train_batches)
+            bar_str = '█' * filled + '░' * (bar_len - filled)
+            avg_loss = running_loss / b_idx
+            remaining_steps = n_train_batches - b_idx
+            eta_sec = int(remaining_steps * step_time)
+            eta_str = f'{eta_sec // 60:02d}m {eta_sec % 60:02d}s'
+
+            # Real-time Hardware & Memory Telemetry String
+            mem_telemetry = ''
+            if torch.cuda.is_available():
+                v_alloc = torch.cuda.memory_allocated() / (1024 ** 2)
+                mem_telemetry = f' | VRAM: {v_alloc:.0f}MB'
+            try:
+                mem_telemetry += f' | RAM: {psutil.virtual_memory().percent:.0f}%'
+            except Exception:
+                pass
+
+            print(f'  [TRAIN] Epoch {epoch:02d}/{EPOCHS:02d} | Batch {b_idx:02d}/{n_train_batches:02d} [{bar_str}] {pct:5.1f}% | Loss: {loss.item():.4f} (Avg: {avg_loss:.4f}){mem_telemetry} | Step: {step_time:.1f}s | ETA: {eta_str}')
             sys.stdout.flush()
 
-            del spatial, temporal, labels, logits, v_loss
+            del spatial, temporal, labels, logits, loss
+            if b_idx % 10 == 0:
+                gc.collect()
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
 
-    val_loss /= max(n_val_batches, 1)
-    val_preds_arr = np.array(val_preds)
-    val_targets_arr = np.array(val_targets)
+        train_loss = running_loss / max(n_train_batches, 1)
+        scheduler.step()
 
-    binary_preds = (val_preds_arr >= 0.5).astype(int)
-    val_acc = accuracy_score(val_targets_arr, binary_preds)
-    precision, recall, f1, _ = precision_recall_fscore_support(val_targets_arr, binary_preds, average='binary', zero_division=0)
-    try:
-        val_auc = roc_auc_score(val_targets_arr, val_preds_arr)
-    except Exception:
-        val_auc = 0.5
+        # Validation Loop
+        model.eval()
+        val_loss = 0.0
+        val_preds = []
+        val_targets = []
+        n_val_batches = len(val_loader)
 
-    epoch_time = time.time() - t_epoch_start
-    epoch_rec = {
-        'epoch': epoch,
-        'train_loss': train_loss,
-        'val_loss': val_loss,
-        'val_auc': val_auc,
-        'val_acc': val_acc,
-        'precision': precision,
-        'recall': recall,
-        'f1': f1,
-        'lr': current_lr,
-        'epoch_sec': epoch_time
-    }
-    history.append(epoch_rec)
-    pd.DataFrame(history).to_csv(metrics_log_path, index=False)
+        print(f'\n  [VALIDATION] Commencing validation on {len(val_df)} unseen test videos...')
+        sys.stdout.flush()
 
-    print(f'\n' + '-' * 85)
-    print(f'[✓] EPOCH {epoch:02d}/{EPOCHS:02d} SUMMARY ({epoch_time:.1f}s)')
-    print(f'  • Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}')
-    print(f'  • Val ROC-AUC: {val_auc:.4f} | Accuracy: {val_acc * 100:.2f}% | F1-Score: {f1:.4f}')
-    print(f'  • Precision : {precision:.4f} | Recall: {recall:.4f}')
-    print('-' * 85)
+        with torch.no_grad():
+            for vb_idx, batch in enumerate(val_loader, 1):
+                spatial = batch['spatial'].to(device, non_blocking=True)
+                temporal = batch['temporal'].to(device, non_blocking=True)
+                labels = batch['label'].to(device, non_blocking=True)
 
-    latest_state = {
+                if use_amp:
+                    with torch.cuda.amp.autocast():
+                        logits = model(spatial, temporal)
+                        v_loss = criterion(logits, labels)
+                else:
+                    logits = model(spatial, temporal)
+                    v_loss = criterion(logits, labels)
+
+                val_loss += v_loss.item()
+                probs = F.softmax(logits, dim=1)[:, 1].cpu().numpy()
+                val_preds.extend(probs.tolist())
+                val_targets.extend(labels.cpu().numpy().tolist())
+
+                pct_v = (vb_idx / n_val_batches) * 100
+                filled_v = int(bar_len * vb_idx / n_val_batches)
+                bar_v = '█' * filled_v + '░' * (bar_len - filled_v)
+                print(f'  [VAL]   Batch {vb_idx:02d}/{n_val_batches:02d} [{bar_v}] {pct_v:5.1f}% | Val Loss: {v_loss.item():.4f}')
+                sys.stdout.flush()
+
+                del spatial, temporal, labels, logits, v_loss
+
+        val_loss /= max(n_val_batches, 1)
+        val_preds_arr = np.array(val_preds)
+        val_targets_arr = np.array(val_targets)
+
+        binary_preds = (val_preds_arr >= 0.5).astype(int)
+        val_acc = accuracy_score(val_targets_arr, binary_preds)
+        precision, recall, f1, _ = precision_recall_fscore_support(val_targets_arr, binary_preds, average='binary', zero_division=0)
+        try:
+            val_auc = roc_auc_score(val_targets_arr, val_preds_arr)
+        except Exception:
+            val_auc = 0.5
+
+        epoch_time = time.time() - t_epoch_start
+        epoch_rec = {
+            'epoch': epoch,
+            'train_loss': train_loss,
+            'val_loss': val_loss,
+            'val_auc': val_auc,
+            'val_acc': val_acc,
+            'precision': precision,
+            'recall': recall,
+            'f1': f1,
+            'lr': current_lr,
+            'epoch_sec': epoch_time
+        }
+        history.append(epoch_rec)
+        pd.DataFrame(history).to_csv(metrics_log_path, index=False)
+
+        print(f'\n' + '-' * 85)
+        print(f'[✓] EPOCH {epoch:02d}/{EPOCHS:02d} SUMMARY ({epoch_time:.1f}s)')
+        print(f'  • Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}')
+        print(f'  • Val ROC-AUC: {val_auc:.4f} | Accuracy: {val_acc * 100:.2f}% | F1-Score: {f1:.4f}')
+        print(f'  • Precision : {precision:.4f} | Recall: {recall:.4f}')
+        print('-' * 85)
+
+        # Atomic Checkpoint Persistence
+        latest_state = {
+            'epoch': epoch,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'scheduler_state_dict': scheduler.state_dict(),
+            'best_val_auc': max(best_val_auc, val_auc),
+            'history': history
+        }
+        if use_amp:
+            latest_state['scaler_state_dict'] = scaler.state_dict()
+        torch.save(latest_state, latest_checkpoint_path)
+
+        if val_auc > best_val_auc:
+            best_val_auc = val_auc
+            torch.save(model.state_dict(), best_checkpoint_path)
+            print(f'  >>> [★] NEW HIGHEST VALIDATION ROC-AUC ({best_val_auc:.4f})! Saved weights to {best_checkpoint_path} <<<')
+
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+    print('\n' + '=' * 85)
+    print(f'     TRAINING CAMPAIGN CONCLUDED CLEANLY! PEAK VAL ROC-AUC: {best_val_auc:.4f}')
+    print('=' * 85)
+
+except KeyboardInterrupt:
+    print('\n[!] Session interrupted by user (KeyboardInterrupt)!')
+    interrupted_state = {
         'epoch': epoch,
         'model_state_dict': model.state_dict(),
         'optimizer_state_dict': optimizer.state_dict(),
         'scheduler_state_dict': scheduler.state_dict(),
-        'best_val_auc': max(best_val_auc, val_auc),
+        'best_val_auc': best_val_auc,
         'history': history
     }
-    torch.save(latest_state, latest_checkpoint_path)
-
-    if val_auc > best_val_auc:
-        best_val_auc = val_auc
-        torch.save(model.state_dict(), best_checkpoint_path)
-        print(f'  >>> [★] NEW HIGHEST VALIDATION ROC-AUC ({best_val_auc:.4f})! Saved weights to {best_checkpoint_path} <<<')
-
-    gc.collect()
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
-
-print('\n' + '=' * 85)
-print(f'     TRAINING CAMPAIGN CONCLUDED CLEANLY! PEAK VAL ROC-AUC: {best_val_auc:.4f}')
-print('=' * 85)'''
+    if use_amp:
+        interrupted_state['scaler_state_dict'] = scaler.state_dict()
+    torch.save(interrupted_state, latest_checkpoint_path)
+    print(f'[✓] Clean recovery checkpoint saved to {latest_checkpoint_path}.')
+    print('    You can rerun this notebook anytime and it will resume right here!')'''
     ))
 
     # CELL 7: Publication Figures & Performance Visualization
