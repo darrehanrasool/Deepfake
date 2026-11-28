@@ -31,6 +31,6 @@ jobs:
 
     - name: Run pytest test suite
       env:
-        PYTHONPATH: src
+        PYTHONPATH: src:.
       run: |
         pytest tests/unit/ -v

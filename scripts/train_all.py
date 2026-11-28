@@ -33,8 +33,7 @@ def main():
     models_to_train = ['mesoinception4', 'xception', 'dual_stream_frequency']
 
     for name in models_to_train:
-        print(f'
---> Training Model: {name}')
+        print(f"\n--> Training Model: {name}")
         model = ModelFactory.create(name)
         optimizer = torch.optim.AdamW(model.parameters(), lr=0.0002)
         criterion = nn.CrossEntropyLoss()
@@ -47,8 +46,7 @@ def main():
             trainer.callbacks.on_epoch_end(epoch, metrics)
         trainer.ckpt_manager.save_checkpoint(model, optimizer, epoch=2, metrics=metrics, is_best=True, model_name=name)
 
-    print('
-All models trained and saved to checkpoints/!')
+    print("\nAll models trained and saved to checkpoints/!")
 
 
 if __name__ == '__main__':
