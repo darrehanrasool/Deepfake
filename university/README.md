@@ -21,19 +21,14 @@ university/
 
 ## How to Execute
 
-### Option 1: From the Project Root (Easiest)
+### Option 1: Directly via Main Script (Recommended)
 ```bash
-python train.py
+python university/main.py --epochs 10 --batch-size 8 --lr 0.0001
 ```
 
 ### Option 2: As a Python Module
 ```bash
-python -m university.main
-```
-
-### Option 3: Directly via Main Script
-```bash
-python university/main.py --epochs 10 --batch-size 8
+python -m university.main --epochs 10 --batch-size 8
 ```
 
 ## Features & Guarantees

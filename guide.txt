@@ -101,18 +101,22 @@ Output should display:
 6. LAUNCHING TRAINING DIRECTLY VIA PYTHON (NO JUPYTER NEEDED!)
 --------------------------------------------------------------------------------
 You do NOT need Jupyter Lab or Jupyter Notebook at all!
-Simply run this one command directly in PowerShell or Command Prompt:
+All training code is modularized in the `university/` package.
+Simply run this command directly in PowerShell or Command Prompt:
 
-    python train.py
+    python university/main.py
+
+(Or alternatively via Python module syntax):
+    python -m university.main
 
 That's it! It runs automatically from start to finish.
 
 OPTIONAL CUSTOM SETTINGS (CLI FLAGS):
-If you want to customize epochs, batch size, or device:
-    python train.py --epochs 10 --batch-size 8
-    python train.py --epochs 20 --lr 1e-4
-    python train.py --device cuda
-    python train.py --help              (shows all options)
+If you want to customize epochs, batch size, learning rate, or device:
+    python university/main.py --epochs 10 --batch-size 8 --lr 0.0001
+    python university/main.py --epochs 20 --batch-size 16 --lr 0.0001
+    python university/main.py --device cuda
+    python university/main.py --help              (shows all options)
 
 ALTERNATIVE: IF YOU PREFER JUPYTER (OPTIONAL)
 If you do want to use Jupyter:
@@ -155,7 +159,7 @@ Click: Kernel -> Restart Kernel and Run All Cells...
      * `models/weights/training_metrics.csv` (CSV metrics history)
    - IF THE LAPTOP RUNS OUT OF BATTERY, RESTARTS, OR IS ACCIDENTALLY CLOSED:
      Simply open terminal again and run:
-         python train.py
+         python university/main.py
      It will automatically detect `latest_checkpoint.pt`, reload the model weights,
      optimizer state, learning rate, scheduler, and resume training right from that
      epoch without losing progress or restarting from Epoch 1!

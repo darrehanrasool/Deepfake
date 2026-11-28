@@ -1,0 +1,109 @@
+================================================================================
+          DEEPFAKE-AI: WINDOWS SETUP & MASTER TRAINING GUIDE (UNIVERSITY PC)
+================================================================================
+
+Institutional Authors:
+- Dar Rehan Rasool (M.Tech Student, Centre for Artificial Intelligence, IUST)
+- Dr. Riyaz Ahmed (M.Tech Student, Centre for Artificial Intelligence, IUST)
+- Dr. M. Abdul Jawad (M.Tech Student, Centre for Artificial Intelligence, IUST)
+
+Copyright (c) 2026 Dar Rehan Rasool (@darrehanrasool). All rights reserved.
+================================================================================
+
+This guide provides simple, step-by-step instructions to set up, activate, and
+run the DeepFake-AI project on Windows (university laptop / desktop with NVIDIA GPU).
+
+--------------------------------------------------------------------------------
+STEP 1: SETUP VIRTUAL ENVIRONMENT (ONE-TIME SETUP)
+--------------------------------------------------------------------------------
+1. Open Windows File Explorer and navigate to your `Deep` project directory.
+2. In the folder address bar at the top, type `powershell` (or `cmd`) and press ENTER.
+3. In the terminal, create your virtual environment:
+
+    python -m venv venv
+
+   (Note: If `python` is not recognized, use `py -m venv venv`)
+
+
+--------------------------------------------------------------------------------
+STEP 2: FIX POWERSHELL "SCRIPT IS DISABLED" (PSSECURITYEXCEPTION)
+--------------------------------------------------------------------------------
+If activating in PowerShell displays:
+  "File ...\Activate.ps1 cannot be loaded because running scripts is disabled
+   on this system. (PSSecurityException)"
+
+Run this one-time command in PowerShell to allow script execution:
+
+    Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+
+When prompted, press 'Y' and ENTER.
+
+Now activate the environment:
+
+In PowerShell:
+    .\venv\Scripts\Activate.ps1
+
+(Or in Command Prompt / CMD):
+    venv\Scripts\activate.bat
+
+SUCCESS CHECK:
+Your terminal prompt will now show `(venv)` at the beginning:
+    (venv) PS C:\Users\YourName\Desktop\Deep>
+
+
+--------------------------------------------------------------------------------
+STEP 3: INSTALL PYTORCH WITH NVIDIA CUDA ACCELERATION & DEPENDENCIES
+--------------------------------------------------------------------------------
+Install the official CUDA 12.4 PyTorch build to utilize your NVIDIA GPU:
+
+    pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
+
+Install required project dependencies:
+
+    pip install -r requirements.txt
+
+QUICK GPU VERIFICATION (OPTIONAL):
+Confirm that PyTorch sees your NVIDIA CUDA GPU:
+    python -c "import torch; print('CUDA Available:', torch.cuda.is_available(), '| GPU:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU')"
+
+
+--------------------------------------------------------------------------------
+STEP 4: RUN TRAINING DIRECTLY (NO JUPYTER NEEDED!)
+--------------------------------------------------------------------------------
+All training code is cleanly encapsulated in the `university/` package.
+To start training, simply run:
+
+    python university/main.py
+
+(Or alternatively via module syntax):
+    python -m university.main
+
+CUSTOM ARGUMENTS:
+To specify custom epochs, batch size, or learning rate:
+
+    python university/main.py --epochs 10 --batch-size 8 --lr 0.0001
+    python university/main.py --epochs 20 --batch-size 16 --lr 0.0001
+    python university/main.py --device cuda
+    python university/main.py --help
+
+
+--------------------------------------------------------------------------------
+STEP 5: AUTOMATIC RESUME ON INTERRUPTION (CRASH/SHUTDOWN SAFETY)
+--------------------------------------------------------------------------------
+If training is interrupted at any point (Ctrl+C, laptop closed, or terminal restart):
+- Do NOT worry! The CheckpointManager automatically saves `latest_checkpoint.pt`
+  at the end of every epoch.
+- Simply run the exact same command again:
+
+    python university/main.py
+
+- The pipeline will detect `models/weights/latest_checkpoint.pt`, display:
+  `[✓] AUTOMATIC RESUME SUCCESSFUL: Picking up from Epoch XX/10!`,
+  and seamlessly resume without losing training progress.
+
+When validation ROC-AUC reaches a new highest score, weights are automatically
+saved to:
+    models/weights/best_model.pt
+Visualizations and publication curves are saved to:
+    visualizations/real_multimodal_training_curves.png
+================================================================================
