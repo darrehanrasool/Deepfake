@@ -34,8 +34,9 @@ python3 scripts/run_dashboard.py
 - **GenImage**: Diffusion-generated faces (Stable Diffusion, Midjourney, DALL-E) vs GANs
 
 ## 3. Master Multimodal Training Pipeline
-The master standalone training notebook is available at:
-`notebooks/01_master_multimodal_training.ipynb`
+The master training pipeline is available as both a direct standalone Python script and a Jupyter notebook:
+- **Direct Python Script (Recommended for University PC):** `train.py` (Run via `python train.py`)
+- **Interactive Jupyter Notebook:** `notebooks/01_master_multimodal_training.ipynb`
 
 ### Features:
 - **Universal Hardware Autonomy**: Automatically detects NVIDIA CUDA (with FP16 AMP & VRAM profiling), Apple Silicon MPS, or CPU multi-threading.

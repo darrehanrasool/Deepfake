@@ -98,37 +98,46 @@ Output should display:
 
 
 --------------------------------------------------------------------------------
-6. LAUNCHING THE MASTER TRAINING NOTEBOOK
+6. LAUNCHING TRAINING DIRECTLY VIA PYTHON (NO JUPYTER NEEDED!)
 --------------------------------------------------------------------------------
-1. With `(venv)` active in your terminal, launch Jupyter:
+You do NOT need Jupyter Lab or Jupyter Notebook at all!
+Simply run this one command directly in PowerShell or Command Prompt:
+
+    python train.py
+
+That's it! It runs automatically from start to finish.
+
+OPTIONAL CUSTOM SETTINGS (CLI FLAGS):
+If you want to customize epochs, batch size, or device:
+    python train.py --epochs 10 --batch-size 8
+    python train.py --epochs 20 --lr 1e-4
+    python train.py --device cuda
+    python train.py --help              (shows all options)
+
+ALTERNATIVE: IF YOU PREFER JUPYTER (OPTIONAL)
+If you do want to use Jupyter:
     jupyter lab
-   (or `jupyter notebook`)
-
-2. Your browser will automatically open.
-3. In the left file explorer, open:
-    notebooks / 01_master_multimodal_training.ipynb
-
-4. Click the top menu:
-    Kernel -> Restart Kernel and Run All Cells...
+Open: notebooks / 01_master_multimodal_training.ipynb
+Click: Kernel -> Restart Kernel and Run All Cells...
 
 
 --------------------------------------------------------------------------------
-7. WHAT THE NOTEBOOK DOES AUTOMATICALLY
+7. WHAT THE TRAINING SCRIPT DOES AUTOMATICALLY
 --------------------------------------------------------------------------------
-1. AUTOMATIC CUDA SELECTION & TELEMETRY (Cell 2):
+1. AUTOMATIC CUDA SELECTION & TELEMETRY:
    - Automatically detects NVIDIA CUDA, queries your GPU model (e.g. RTX 3060 Laptop),
      total VRAM, and enables FP16 Automatic Mixed Precision (AMP).
    - Reads host RAM (Total, Available, % used).
    - Queries GPU sensors (Core Temp, Fan Speed, GPU Core Load, Power Draw) via nvidia-smi.
 
-2. DUAL BENCHMARK AUTO-DISCOVERY (Cell 3):
+2. DUAL BENCHMARK AUTO-DISCOVERY:
    - Searches your local drive for Google/Jigsaw DFD (22.5 GB / 3,431 videos) and
      Meta DFDC (1.86 GB / 400 videos + metadata.json).
    - Performs strict Actor-Isolated Group Partitioning (80% Train, 20% Val)
      with zero identity leakage between splits.
    - Computes dynamic inverse class weights to balance the 8.5:1 synthetic ratio.
 
-3. SOTA MULTIMODAL ST2-SYNCNET TRAINING (Cells 4, 5, 6):
+3. SOTA MULTIMODAL ST2-SYNCNET TRAINING:
    - 8-frame temporal tubes with 2D Haar Wavelet 12-subband decomposition,
      spatial boundary seams, and Bi-directional GRU biological continuity.
    - Anti-overfitting regularizations: Label Smoothing (0.05), AdamW Weight Decay (1e-4),
@@ -143,6 +152,19 @@ Output should display:
    - Checkpoints are saved automatically:
      * `models/weights/latest_checkpoint.pt` (saved after every epoch and on user interrupt)
      * `models/weights/best_model.pt` (saved whenever validation ROC-AUC reaches a new peak)
+     * `models/weights/training_metrics.csv` (CSV metrics history)
+   - IF THE LAPTOP RUNS OUT OF BATTERY, RESTARTS, OR IS ACCIDENTALLY CLOSED:
+     Simply open terminal again and run:
+         python train.py
+     It will automatically detect `latest_checkpoint.pt`, reload the model weights,
+     optimizer state, learning rate, scheduler, and resume training right from that
+     epoch without losing progress or restarting from Epoch 1!
+
+6. PUBLICATION FIGURES:
+   - Automatically saves high-resolution loss progression, validation ROC-AUC trajectories,
+     and ROC curves to:
+     `visualizations/real_multimodal_training_curves.png`
+
      * `models/weights/training_metrics.csv` (CSV metrics history)
    - IF THE LAPTOP RUNS OUT OF BATTERY, RESTARTS, OR IS ACCIDENTALLY CLOSED:
      Simply launch Jupyter and run the notebook again!
